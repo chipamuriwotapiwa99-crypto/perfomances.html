@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Performance - Secure Backup</title>
+    <style>
+        :root {
+            --primary-bg: #ecf3ff;
+            --header-blue: #b4c7e7;
+            --date-blue: #8eaadb;
+            --total-green: #c6e0b4;
+            --rank-top-1: #ffd700;
+            --rank-top-2: #c0c0c0;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--primary-bg); padding: 20px; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        
+        h1 { text-align: center; color: #203764; }
+        
+        /* The "Safety Box" at the top */
+        .backup-zone { 
+            background: #fff3cd; 
+            padding: 15px; 
+            border: 2px dashed #ffeeba; 
+            margin-bottom: 20px; 
+            text-align: center;
+            border-radius: 8px;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #d4d4d4; padding: 8px; text-align: center; }
+
+        #auto-leaderboard { border: 3px solid #203764; }
+        #auto-leaderboard th { background-color: #203764; color: white; }
+        .rank-1-row { background-color: var(--rank-top-1); font-weight: bold; }
+
+        .excel-table th { background-color: var(--header-blue); }
+        .date-cell { background-color: var(--date-blue); color: white; font-weight: bold; width: 120px; }
+        .total-row { background-color: var(--total-green); font-weight: bold; }
+
+        input { width: 100%; border: none; text-align: center; padding: 5px; background: transparent; }
+        
+        button { padding: 10px 15px; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; margin: 5px; }
+        .btn-save { background-color: #28a745; color: white; }
+        .btn-load { background-color: #17a2b8; color: white; }
+        .btn-add { background-color: #007bff; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Worker Performance Portal</h1>
+
+    <div class="backup-zone">
+        <strong>💾 SHOP DATA TOOLS:</strong><br>
+        <button class="btn-save" onclick="exportData()">Download Today's Data (Save File)</button>
+        <button class="btn-load" onclick="document.getElementById('fileInput').click()">Upload/Load Saved Data</button>
+        <input type="file" id="fileInput" style="display:none" onchange="importData(event)">
+        <p style="font-size: 0.8em; color: #856404; margin-top: 5px;">*Because browsers block auto-saving for local files, use these buttons to save and load your progress.*</p>
+    </div>
+
+    <table id="auto-leaderboard">
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Name</th>
+                <th>Weight (g)</th>
+                <th>Difficulty Pts</th>
+                <th>Final Rating</th>
+            </tr>
+        </thead>
+        <tbody id="leaderboard-body"></tbody>
+    </table>
+
+    <div style="text-align:center">
+        <button class="btn-add" onclick="addNewDateRow()">+ Add New Row (Day)</button>
+    </div>
+
+    <h2>WEIGHTS (GRAMS)</h2>
+    <table class="excel-table">
+        <thead><tr id="weight-headers"><th>Date</th></tr></thead>
+        <tbody id="weight-tbody"></tbody>
+        <tfoot><tr class="total-row" id="weight-totals-row"><td class="date-cell">TOTAL</td></tr></tfoot>
+    </table>
+
+    <h2>DIFFICULTY INDEX</h2>
+    <table class="excel-table">
+        <thead><tr id="difficulty-headers"><th>Date</th></tr></thead>
+        <tbody id="difficulty-tbody"></tbody>
+        <tfoot><tr class="total-row" id="difficulty-totals-row"><td class="date-cell">TOTAL</td></tr></tfoot>
+    </table>
+</div>
+
+<script>
+    const WORKERS = ["Connie", "Mantsi", "Kwenadi", "Mahlatse", "Pretty", "Tatenda", "Tariro"];
+    
+    window.onload = () => {
+        setupHeaders();
+        addNewDateRow(); // Start with one empty row
+    };
+
+    function setupHeaders() {
+        const wHead = document.getElementById("weight-headers");
+        const dHead = document.getElementById("difficulty-headers");
+        const wTot = document.getElementById("weight-totals-row");
+        const dTot = document.getElementById("difficulty-totals-row");
+        WORKERS.forEach(name => {
+            wHead.innerHTML += `<th>${name}</th>`;
+            dHead.innerHTML += `<th>${name}</th>`;
+            wTot.innerHTML += `<td id="total-w-${name}">0</td>`;
+            dTot.innerHTML += `<td id="total-d-${name}">0</td>`;
+        });
+    }
+
+    function addNewDateRow(dateVal = "", wScores = null, dScores = null) {
+        createRow('weight-tbody', 'w', dateVal, wScores);
+        createRow('difficulty-tbody', 'd', dateVal, dScores);
+        calculate();
+    }
+
+    function createRow(tbodyId, type, dateVal, scores) {
+        const tbody = document.getElementById(tbodyId);
+        const row = document.createElement('tr');
+        let html = `<td class="date-cell"><input type="text" class="row-date" value="${dateVal}" oninput="calculate()"></td>`;
+        WORKERS.forEach((name, i) => {
+            let val = scores ? scores[i] : "";
+            html += `<td><input type="number" class="${type}-input" data-worker="${name}" value="${val}" oninput="calculate()"></td>`;
+        });
+        row.innerHTML = html;
+        tbody.appendChild(row);
+    }
+
+    function calculate() {
+        let totals = {};
+        WORKERS.forEach(n => totals[n] = { w: 0, d: 0 });
+
+        document.querySelectorAll("#weight-tbody tr").forEach(row => {
+            row.querySelectorAll(".w-input").forEach(input => {
+                totals[input.dataset.worker].w += parseFloat(input.value) || 0;
+            });
+        });
+
+        document.querySelectorAll("#difficulty-tbody tr").forEach(row => {
+            row.querySelectorAll(".d-input").forEach(input => {
+                totals[input.dataset.worker].d += parseFloat(input.value) || 0;
+            });
+        });
+
+        WORKERS.forEach(n => {
+            document.getElementById(`total-w-${n}`).innerText = totals[n].w;
+            document.getElementById(`total-d-${n}`).innerText = totals[n].d;
+        });
+
+        updateLeaderboard(totals);
+    }
+
+    function updateLeaderboard(totals) {
+        const tbody = document.getElementById("leaderboard-body");
+        tbody.innerHTML = "";
+        let list = WORKERS.map(n => ({
+            name: n, w: totals[n].w, d: totals[n].d, score: totals[n].w + totals[n].d
+        })).sort((a,b) => b.score - a.score);
+
+        list.forEach((item, i) => {
+            let row = document.createElement("tr");
+            if(i === 0 && item.score > 0) row.className = "rank-1-row";
+            row.innerHTML = `<td>${i+1}</td><td>${item.name}</td><td>${item.w}</td><td>${item.d}</td><td>${item.score}</td>`;
+            tbody.appendChild(row);
+        });
+    }
+
+    // SAVE DATA TO A FILE
+    function exportData() {
+        const data = { dates: [], weights: [], diffs: [] };
+        const rows = document.querySelectorAll("#weight-tbody tr");
+        rows.forEach((row, i) => {
+            const date = row.querySelector(".row-date").value;
+            const wVals = Array.from(row.querySelectorAll(".w-input")).map(input => input.value);
+            const dRow = document.querySelectorAll("#difficulty-tbody tr")[i];
+            const dVals = Array.from(dRow.querySelectorAll(".d-input")).map(input => input.value);
+            data.dates.push(date);
+            data.weights.push(wVals);
+            data.diffs.push(dVals);
+        });
+
+        const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `Shop_Data_${new Date().toLocaleDateString()}.json`;
+        a.click();
+    }
+
+    // LOAD DATA FROM A FILE
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = JSON.parse(e.target.result);
+            document.getElementById("weight-tbody").innerHTML = "";
+            document.getElementById("difficulty-tbody").innerHTML = "";
+            data.dates.forEach((date, i) => {
+                addNewDateRow(date, data.weights[i], data.diffs[i]);
+            });
+        };
+        reader.readAsText(file);
+    }
+</script>
+</body>
+</html>
