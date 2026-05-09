@@ -3,210 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Worker Performance - Secure Backup</title>
+    <title>EK RECYCLING | PERFORMANCE PORTAL</title>
     <style>
-        :root {
-            --primary-bg: #ecf3ff;
-            --header-blue: #b4c7e7;
-            --date-blue: #8eaadb;
-            --total-green: #c6e0b4;
-            --rank-top-1: #ffd700;
-            --rank-top-2: #c0c0c0;
+        :root { 
+            --ek-navy: #0a192f; 
+            --ek-accent: #00d2ff;
+            --ek-red: #d90429;
+            --rank-gold: #ffc300; 
         }
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; padding: 20px; margin: 0; }
+        .container { max-width: 1300px; margin: auto; background: #1e293b; padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
 
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--primary-bg); padding: 20px; }
-        .container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .announcement-box { background: var(--ek-red); color: white; padding: 20px; border-radius: 12px; margin-bottom: 25px; border-left: 8px solid white; }
+        .announcement-box h3 { margin: 0 0 10px 0; font-size: 1.2em; text-transform: uppercase; letter-spacing: 2px; }
+        .announcement-box p { margin: 5px 0; font-size: 1.2em; font-weight: bold; }
+
+        .ticker-wrap { background: #000; color: #ffcc00; padding: 12px 0; overflow: hidden; margin-bottom: 30px; border-radius: 8px; border: 1px solid #334155; }
+        .ticker { display: inline-block; white-space: nowrap; animation: marquee 15s linear infinite; font-family: 'Courier New', monospace; font-weight: bold; font-size: 1.3em; }
+        @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+
+        h1 { text-align: left; font-size: 2.5em; margin: 0 0 20px 0; color: #fff; border-bottom: 2px solid var(--ek-accent); display: inline-block; }
         
-        h1 { text-align: center; color: #203764; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; background: #334155; border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+        th { background: #0f172a; color: var(--ek-accent); padding: 15px; font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; font-weight: 600; }
+
+        .total-row td { background: #0f172a; color: var(--ek-accent); font-size: 1.1em; border-top: 2px solid var(--ek-accent); padding: 15px; }
+        .rank-1-row { background: rgba(251, 191, 36, 0.15) !important; color: var(--rank-gold); }
         
-        /* The "Safety Box" at the top */
-        .backup-zone { 
-            background: #fff3cd; 
-            padding: 15px; 
-            border: 2px dashed #ffeeba; 
-            margin-bottom: 20px; 
-            text-align: center;
-            border-radius: 8px;
-        }
-
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        th, td { border: 1px solid #d4d4d4; padding: 8px; text-align: center; }
-
-        #auto-leaderboard { border: 3px solid #203764; }
-        #auto-leaderboard th { background-color: #203764; color: white; }
-        .rank-1-row { background-color: var(--rank-top-1); font-weight: bold; }
-
-        .excel-table th { background-color: var(--header-blue); }
-        .date-cell { background-color: var(--date-blue); color: white; font-weight: bold; width: 120px; }
-        .total-row { background-color: var(--total-green); font-weight: bold; }
-
-        input { width: 100%; border: none; text-align: center; padding: 5px; background: transparent; }
-        
-        button { padding: 10px 15px; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; margin: 5px; }
-        .btn-save { background-color: #28a745; color: white; }
-        .btn-load { background-color: #17a2b8; color: white; }
-        .btn-add { background-color: #007bff; color: white; }
+        input { width: 85%; padding: 10px; border: 1px solid #475569; border-radius: 8px; background: #1e293b; color: white; text-align: center; font-size: 1.1em; font-weight: bold; }
+        .admin-btn { background: transparent; color: #64748b; border: 1px solid #475569; padding: 8px 16px; cursor: pointer; border-radius: 6px; float: right; }
+        .btn-add { background: var(--ek-accent); color: #0a192f; padding: 18px 40px; border: none; border-radius: 12px; font-size: 1.2em; font-weight: bold; cursor: pointer; display: block; margin: 25px auto; }
+        .section-title { font-size: 0.85em; color: #94a3b8; text-transform: uppercase; letter-spacing: 3px; margin: 35px 0 12px 0; display: block; border-left: 4px solid var(--ek-accent); padding-left: 10px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Worker Performance Portal</h1>
-
-    <div class="backup-zone">
-        <strong>💾 SHOP DATA TOOLS:</strong><br>
-        <button class="btn-save" onclick="exportData()">Download Today's Data (Save File)</button>
-        <button class="btn-load" onclick="document.getElementById('fileInput').click()">Upload/Load Saved Data</button>
-        <input type="file" id="fileInput" style="display:none" onchange="importData(event)">
-        <p style="font-size: 0.8em; color: #856404; margin-top: 5px;">*Because browsers block auto-saving for local files, use these buttons to save and load your progress.*</p>
+    <button onclick="unlockAdmin()" id="admin-btn" class="admin-btn">Log In</button>
+    <h1>EK RECYCLING</h1>
+    
+    <div class="announcement-box">
+        <h3>🏢 INTERNAL COMMUNICATIONS</h3>
+        <p>🔴 <strong>Kwenadi:</strong> Persistent punctuality issues detected. Please see management. lol!</p>
+        <p>🟢 <strong>Tariro:</strong> Performance trajectory is excellent. Keep it up!</p>
     </div>
 
-    <table id="auto-leaderboard">
+    <div class="ticker-wrap">
+        <div class="ticker">
+            ⚠️ Im tired I need an off day. Cant do this crap anymore. &nbsp;&nbsp;&nbsp;&nbsp; ⚠️ Im tired I need an off day. Cant do this crap anymore.
+        </div>
+    </div>
+
+    <span class="section-title">Performance Hierarchy</span>
+    <table id="leaderboard">
         <thead>
-            <tr>
-                <th>Rank</th>
-                <th>Name</th>
-                <th>Weight (g)</th>
-                <th>Difficulty Pts</th>
-                <th>Final Rating</th>
-            </tr>
+            <tr><th>Rank</th><th>Personnel</th><th>Volume (g)</th><th>Complexity</th><th>Final Rating</th></tr>
         </thead>
         <tbody id="leaderboard-body"></tbody>
     </table>
 
-    <div style="text-align:center">
-        <button class="btn-add" onclick="addNewDateRow()">+ Add New Row (Day)</button>
+    <div id="admin-controls" class="hidden">
+        <button class="btn-add" onclick="addNewRow()">LOG NEW PRODUCTION DATA</button>
     </div>
 
-    <h2>WEIGHTS (GRAMS)</h2>
-    <table class="excel-table">
-        <thead><tr id="weight-headers"><th>Date</th></tr></thead>
-        <tbody id="weight-tbody"></tbody>
-        <tfoot><tr class="total-row" id="weight-totals-row"><td class="date-cell">TOTAL</td></tr></tfoot>
+    <span class="section-title">Production Metrics (Weight in Grams)</span>
+    <table>
+        <thead id="w-head"><tr><th>Log Date</th></tr></thead>
+        <tbody id="w-body"></tbody>
+        <tfoot id="w-foot"><tr class="total-row"><td>TOTALS</td></tr></tfoot>
     </table>
 
-    <h2>DIFFICULTY INDEX</h2>
-    <table class="excel-table">
-        <thead><tr id="difficulty-headers"><th>Date</th></tr></thead>
-        <tbody id="difficulty-tbody"></tbody>
-        <tfoot><tr class="total-row" id="difficulty-totals-row"><td class="date-cell">TOTAL</td></tr></tfoot>
+    <span class="section-title">Complexity Metrics (Difficulty Index)</span>
+    <table>
+        <thead id="d-head"><tr><th>Log Date</th></tr></thead>
+        <tbody id="d-body"></tbody>
+        <tfoot id="d-foot"><tr class="total-row"><td>TOTALS</td></tr></tfoot>
     </table>
 </div>
 
 <script>
+    // Corrected Personnel List
     const WORKERS = ["Connie", "Mantsi", "Kwenadi", "Mahlatse", "Pretty", "Tatenda", "Tariro"];
     
-    window.onload = () => {
-        setupHeaders();
-        addNewDateRow(); // Start with one empty row
-    };
+    // Synced Data from image_606ec2.png
+    const initialData = [
+        { date: "April 24", weights: { Connie: 338, Mantsi: 463, Kwenadi: 326, Mahlatse: 466, Pretty: 356, Tatenda: 498, Tariro: 408 }, diffs: { Connie: 280, Mantsi: 216, Kwenadi: 256, Mahlatse: 192, Pretty: 272, Tatenda: 200, Tariro: 232 } },
+        { date: "April 28", weights: { Connie: 412, Mantsi: 376, Kwenadi: 352, Mahlatse: 286, Pretty: 302, Tatenda: 338, Tariro: 242 }, diffs: { Connie: 228, Mantsi: 208, Kwenadi: 248, Mahlatse: 408, Pretty: 272, Tatenda: 296, Tariro: 240 } },
+        { date: "April 29", weights: { Connie: 326, Mantsi: 249, Kwenadi: 187, Mahlatse: 230, Pretty: 308, Tatenda: 162, Tariro: 196 }, diffs: { Connie: 300, Mantsi: 292, Kwenadi: 360, Mahlatse: 520, Pretty: 340, Tatenda: 464, Tariro: 336 } },
+        { date: "April 30", weights: { Connie: 396, Mantsi: 372, Kwenadi: 374, Mahlatse: 472, Pretty: 0, Tatenda: 288, Tariro: 294 }, diffs: { Connie: 200, Mantsi: 272, Kwenadi: 184, Mahlatse: 224, Pretty: 0, Tatenda: 216, Tariro: 184 } },
+        { date: "May 1", weights: { Connie: 268, Mantsi: 410, Kwenadi: 562, Mahlatse: 490, Pretty: 0, Tatenda: 234, Tariro: 148 }, diffs: { Connie: 280, Mantsi: 268, Kwenadi: 272, Mahlatse: 220, Pretty: 0, Tatenda: 256, Tariro: 232 } },
+        { date: "May 4", weights: { Connie: 316, Mantsi: 330, Kwenadi: 302, Mahlatse: 317, Pretty: 0, Tatenda: 242, Tariro: 0 }, diffs: { Connie: 272, Mantsi: 264, Kwenadi: 176, Mahlatse: 208, Pretty: 0, Tatenda: 176, Tariro: 0 } },
+        { date: "May 5", weights: { Connie: 574, Mantsi: 498, Kwenadi: 336, Mahlatse: 310, Pretty: 0, Tatenda: 340, Tariro: 240 }, diffs: { Connie: 244, Mantsi: 300, Kwenadi: 316, Mahlatse: 372, Pretty: 0, Tatenda: 292, Tariro: 96 } },
+        { date: "May 6", weights: { Connie: 208, Mantsi: 218, Kwenadi: 214, Mahlatse: 258, Pretty: 0, Tatenda: 212, Tariro: 80 }, diffs: { Connie: 224, Mantsi: 144, Kwenadi: 112, Mahlatse: 216, Pretty: 0, Tatenda: 240, Tariro: 168 } },
+        { date: "May 7", weights: { Connie: 366, Mantsi: 412, Kwenadi: 304, Mahlatse: 360, Pretty: 266, Tatenda: 328, Tariro: 208 }, diffs: { Connie: 256, Mantsi: 320, Kwenadi: 248, Mahlatse: 240, Pretty: 160, Tatenda: 216, Tariro: 152 } }
+    ];
 
-    function setupHeaders() {
-        const wHead = document.getElementById("weight-headers");
-        const dHead = document.getElementById("difficulty-headers");
-        const wTot = document.getElementById("weight-totals-row");
-        const dTot = document.getElementById("difficulty-totals-row");
-        WORKERS.forEach(name => {
-            wHead.innerHTML += `<th>${name}</th>`;
-            dHead.innerHTML += `<th>${name}</th>`;
-            wTot.innerHTML += `<td id="total-w-${name}">0</td>`;
-            dTot.innerHTML += `<td id="total-d-${name}">0</td>`;
-        });
+    let isAdmin = false;
+    let ekData = initialData;
+
+    function unlockAdmin() {
+        if (prompt("Access Code:") === "1234") {
+            isAdmin = true;
+            document.getElementById('admin-controls').classList.remove('hidden');
+            document.getElementById('admin-btn').classList.add('hidden');
+            render();
+        }
     }
 
-    function addNewDateRow(dateVal = "", wScores = null, dScores = null) {
-        createRow('weight-tbody', 'w', dateVal, wScores);
-        createRow('difficulty-tbody', 'd', dateVal, dScores);
-        calculate();
+    function updateEntry(idx, sec, worker, val) {
+        if (sec === 'date') ekData[idx].date = val;
+        else ekData[idx][sec][worker] = parseFloat(val) || 0;
+        render(); 
     }
 
-    function createRow(tbodyId, type, dateVal, scores) {
-        const tbody = document.getElementById(tbodyId);
-        const row = document.createElement('tr');
-        let html = `<td class="date-cell"><input type="text" class="row-date" value="${dateVal}" oninput="calculate()"></td>`;
-        WORKERS.forEach((name, i) => {
-            let val = scores ? scores[i] : "";
-            html += `<td><input type="number" class="${type}-input" data-worker="${name}" value="${val}" oninput="calculate()"></td>`;
-        });
-        row.innerHTML = html;
-        tbody.appendChild(row);
+    function addNewRow() {
+        const row = { date: "New Date", weights: {}, diffs: {} };
+        WORKERS.forEach(w => { row.weights[w] = 0; row.diffs[w] = 0; });
+        ekData.push(row);
+        render();
     }
 
-    function calculate() {
-        let totals = {};
-        WORKERS.forEach(n => totals[n] = { w: 0, d: 0 });
+    function render() {
+        const wBody = document.getElementById("w-body"), dBody = document.getElementById("d-body");
+        wBody.innerHTML = ""; dBody.innerHTML = "";
+        let totals = {}; WORKERS.forEach(w => totals[w] = { w: 0, d: 0 });
 
-        document.querySelectorAll("#weight-tbody tr").forEach(row => {
-            row.querySelectorAll(".w-input").forEach(input => {
-                totals[input.dataset.worker].w += parseFloat(input.value) || 0;
+        ekData.forEach((day, idx) => {
+            const lock = isAdmin ? "" : "style='pointer-events:none; border:none; background:transparent;'";
+            let wRow = `<tr><td style="background:#0f172a; color:#64748b;"><input ${lock} value="${day.date}" oninput="updateEntry(${idx}, 'date', null, this.value)"></td>`;
+            let dRow = `<tr><td style="background:#0f172a; color:#64748b;">${day.date}</td>`;
+
+            WORKERS.forEach(w => {
+                const wv = day.weights[w] || 0, dv = day.diffs[w] || 0;
+                totals[w].w += wv; totals[w].d += dv;
+                wRow += `<td><input type="number" ${lock} value="${wv}" oninput="updateEntry(${idx}, 'weights', '${w}', this.value)"></td>`;
+                dRow += `<td><input type="number" ${lock} value="${dv}" oninput="updateEntry(${idx}, 'diffs', '${w}', this.value)"></td>`;
             });
+            wBody.innerHTML += wRow + "</tr>";
+            dBody.innerHTML += dRow + "</tr>";
         });
 
-        document.querySelectorAll("#difficulty-tbody tr").forEach(row => {
-            row.querySelectorAll(".d-input").forEach(input => {
-                totals[input.dataset.worker].d += parseFloat(input.value) || 0;
-            });
+        // Update Totals to match spreadsheet
+        WORKERS.forEach(w => {
+            document.getElementById(`foot-w-${w}`).innerText = totals[w].w;
+            document.getElementById(`foot-d-${w}`).innerText = totals[w].d;
         });
 
-        WORKERS.forEach(n => {
-            document.getElementById(`total-w-${n}`).innerText = totals[n].w;
-            document.getElementById(`total-d-${n}`).innerText = totals[n].d;
-        });
+        const lbBody = document.getElementById("leaderboard-body");
+        lbBody.innerHTML = "";
+        const ranks = WORKERS.map(w => ({ name: w, score: totals[w].w + totals[w].d, w: totals[w].w, d: totals[w].d }))
+                     .sort((a, b) => b.score - a.score);
 
-        updateLeaderboard(totals);
-    }
-
-    function updateLeaderboard(totals) {
-        const tbody = document.getElementById("leaderboard-body");
-        tbody.innerHTML = "";
-        let list = WORKERS.map(n => ({
-            name: n, w: totals[n].w, d: totals[n].d, score: totals[n].w + totals[n].d
-        })).sort((a,b) => b.score - a.score);
-
-        list.forEach((item, i) => {
-            let row = document.createElement("tr");
+        ranks.forEach((item, i) => {
+            const row = lbBody.insertRow();
             if(i === 0 && item.score > 0) row.className = "rank-1-row";
-            row.innerHTML = `<td>${i+1}</td><td>${item.name}</td><td>${item.w}</td><td>${item.d}</td><td>${item.score}</td>`;
-            tbody.appendChild(row);
+            row.innerHTML = `<td>${i+1}</td><td>${item.name}</td><td>${item.w}g</td><td>${item.d}</td><td>${item.score}</td>`;
         });
     }
 
-    // SAVE DATA TO A FILE
-    function exportData() {
-        const data = { dates: [], weights: [], diffs: [] };
-        const rows = document.querySelectorAll("#weight-tbody tr");
-        rows.forEach((row, i) => {
-            const date = row.querySelector(".row-date").value;
-            const wVals = Array.from(row.querySelectorAll(".w-input")).map(input => input.value);
-            const dRow = document.querySelectorAll("#difficulty-tbody tr")[i];
-            const dVals = Array.from(dRow.querySelectorAll(".d-input")).map(input => input.value);
-            data.dates.push(date);
-            data.weights.push(wVals);
-            data.diffs.push(dVals);
-        });
-
-        const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `Shop_Data_${new Date().toLocaleDateString()}.json`;
-        a.click();
-    }
-
-    // LOAD DATA FROM A FILE
-    function importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const data = JSON.parse(e.target.result);
-            document.getElementById("weight-tbody").innerHTML = "";
-            document.getElementById("difficulty-tbody").innerHTML = "";
-            data.dates.forEach((date, i) => {
-                addNewDateRow(date, data.weights[i], data.diffs[i]);
-            });
-        };
-        reader.readAsText(file);
-    }
+    WORKERS.forEach(w => {
+        document.getElementById("w-head").rows[0].innerHTML += `<th>${w}</th>`;
+        document.getElementById("d-head").rows[0].innerHTML += `<th>${w}</th>`;
+        document.getElementById("w-foot").rows[0].innerHTML += `<td id="foot-w-${w}">0</td>`;
+        document.getElementById("d-foot").rows[0].innerHTML += `<td id="foot-d-${w}">0</td>`;
+    });
+    render();
 </script>
 </body>
 </html>
